@@ -4,8 +4,67 @@
     <script src=https://code.jquery.com/jquery-3.6.0.min.js></script>
     <link href="/css/my.css" rel="stylesheet">
 </head>
+<style>
+    table, th, td{
+    border:1px solid black;
+    }
+</style>
 <body>
 <h1>RPG admin panel</h1>
+
+<table id="playersTable">
+    <thead>
+    <tr>
+    <th>#</th>
+    <th>Name</th>
+    <th>Title</th>
+    <th>Race</th>
+    <th>Profession</th>
+    <th>Level</th>
+    <th>Birthday</th>
+    <th>Banned</th>
+    </tr>
+    </thead>
+    <tbody id = "tablebody">
+
+    </tbody>
+</table>
+
+<script>
+    fetch("http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players")
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`Ошибка: ${res.status}`);
+            }
+            return res.json();
+        })
+        .then(data => {
+            const tableBody = document.getElementById("playersTable").getElementsByTagName("tbody")[0];
+
+            // Используем правильный метод forEach и создаем строки с td
+            data.forEach(player => {
+                const row = document.createElement("tr");
+
+                // синтаксис и td для ячеек
+                row.innerHTML = `
+                    <td>${player.id}</td>
+                    <td>${player.name}</td>
+                    <td>${player.title}</td>
+                    <td>${player.race}</td>
+                    <td>${player.profession}</td>
+                    <td>${player.level}</td>
+                    <td>${player.birthday}</td>
+                    <td>${player.banned}</td>
+                `;
+
+                tableBody.appendChild(row); // Добавляем строку в таблицу
+            });
+        })
+        .catch(error => console.error('Ошибка запроса:', error));
+</script>
+
+
+
 
 </body>
 </html>
