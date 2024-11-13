@@ -1,51 +1,62 @@
 <html>
 <head>
-    <title>RPG</title>
-    <script src=https://code.jquery.com/jquery-3.6.0.min.js></script>
     <link href="/css/my.css" rel="stylesheet">
+    <title>RPG</title>
+    <script src = "/js/javascript.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <style>
-    table, th, td{
-    border:1px solid black;
+    table, th, td {
+        border: 1px solid #000000;
+    }
+    caption {
+        font-weight: bold;
+        font-size: 1.5em;
+        text-align: left;
+        margin-bottom: 10px;
     }
 </style>
 <body>
 <h1>RPG admin panel</h1>
 
 <table id="playersTable">
+    <caption>Account List</caption>
     <thead>
     <tr>
-    <th>#</th>
-    <th>Name</th>
-    <th>Title</th>
-    <th>Race</th>
-    <th>Profession</th>
-    <th>Level</th>
-    <th>Birthday</th>
-    <th>Banned</th>
+        <th>#</th>
+        <th>Name</th>
+        <th>Title</th>
+        <th>Race</th>
+        <th>Profession</th>
+        <th>Level</th>
+        <th>Birthday</th>
+        <th>Banned</th>
     </tr>
     </thead>
     <tbody>
-        // get response
+    <!-- Данные будут добавлены через JavaScript -->
     </tbody>
 </table>
+<div id="pagination" class="pagination"></div>
 
 <script>
-    fetch("http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players")
-        .then(res => {
+    function fetchAndDisplayPlayers() {
+        fetch("http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players")
+            .then(res => {
             if (!res.ok) {
                 throw new Error(`Error: ${res.status}`);
             }
             return res.json();
         })
-        .then(data => {
+            .then(data => {
             const tableBody = document.getElementById("playersTable").getElementsByTagName("tbody")[0];
+            tableBody.innerHTML = ""; // Очищаем таблицу перед добавлением новых данных
 
-            // Используем правильный метод forEach и создаем строки с td
+            // Проходим по каждому игроку и добавляем строку в таблицу
             data.forEach(player => {
                 const row = document.createElement("tr");
 
-                // синтаксис и td для ячеек
+                // Добавляем данные игрока в ячейки
                 row.innerHTML = `
                     <td>${player.id}</td>
                     <td>${player.name}</td>
@@ -60,11 +71,15 @@
                 tableBody.appendChild(row); // Добавляем строку в таблицу
             });
         })
-        .catch(error => console.error('Response error:', error));
+            .catch(error => console.error('Response error:', error));
+    }
+    fetchAndDisplayPlayers();
+
+    function paging(){
+
+    }
+
 </script>
-
-
-
 
 </body>
 </html>
