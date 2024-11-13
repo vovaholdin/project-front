@@ -25,8 +25,8 @@
     <th>Banned</th>
     </tr>
     </thead>
-    <tbody id = "tablebody">
-
+    <tbody>
+        // get response
     </tbody>
 </table>
 
@@ -34,7 +34,7 @@
     fetch("http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players")
         .then(res => {
             if (!res.ok) {
-                throw new Error(`Ошибка: ${res.status}`);
+                throw new Error(`Error: ${res.status}`);
             }
             return res.json();
         })
@@ -53,14 +53,14 @@
                     <td>${player.race}</td>
                     <td>${player.profession}</td>
                     <td>${player.level}</td>
-                    <td>${player.birthday}</td>
+                    <td>${new Date(player.birthday).toLocaleDateString()}</td>
                     <td>${player.banned}</td>
                 `;
 
                 tableBody.appendChild(row); // Добавляем строку в таблицу
             });
         })
-        .catch(error => console.error('Ошибка запроса:', error));
+        .catch(error => console.error('Response error:', error));
 </script>
 
 
