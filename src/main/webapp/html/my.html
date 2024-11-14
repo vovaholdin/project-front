@@ -18,6 +18,14 @@
 </style>
 <body>
 <h1>RPG admin panel</h1>
+<form>
+    <label for="playersCount">Count per page:</label>
+    <select id="playersCount" name="playersCount">
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+    </select>
+</form>
 
 <table id="playersTable">
     <caption>Account List</caption>
@@ -40,46 +48,82 @@
 <div id="pagination" class="pagination"></div>
 
 <script>
+    let playersPerPage = 3; // Количество игроков на одной странице
+    let currentPage = 1;
+    let playersData = [];
+
+    document.getElementById("playersCount").addEventListener("change", function() {
+        playersPerPage = parseInt(this.value); // Получаем выбранное значение
+        currentPage = 1; // Сбрасываем на первую страницу
+        displayPage(currentPage); // Обновляем отображение таблицы
+        createPaginationButtons(); // Обновляем кнопки пагинации
+    });
+
+    // Функция для получения количества игроков и данных, а затем для отображения страниц
     function fetchAndDisplayPlayers() {
-        fetch("http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players")
-            .then(res => {
-            if (!res.ok) {
-                throw new Error(`Error: ${res.status}`);
-            }
-            return res.json();
+        // Сначала делаем запрос, чтобы получить общее количество игроков
+        fetch("http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players/count")
+            .then(res => res.ok ? res.json() : Promise.reject(`Error: ${res.status}`))
+            .then(totalPlayers => {
+            // Используем полученное количество игроков для второго запроса с правильным pageSize
+            return fetch(`http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players?pageSize=${totalPlayers}`);
         })
+            .then(res => res.ok ? res.json() : Promise.reject(`Error: ${res.status}`))
             .then(data => {
-            const tableBody = document.getElementById("playersTable").getElementsByTagName("tbody")[0];
-            tableBody.innerHTML = ""; // Очищаем таблицу перед добавлением новых данных
-
-            // Проходим по каждому игроку и добавляем строку в таблицу
-            data.forEach(player => {
-                const row = document.createElement("tr");
-
-                // Добавляем данные игрока в ячейки
-                row.innerHTML = `
-                    <td>${player.id}</td>
-                    <td>${player.name}</td>
-                    <td>${player.title}</td>
-                    <td>${player.race}</td>
-                    <td>${player.profession}</td>
-                    <td>${player.level}</td>
-                    <td>${new Date(player.birthday).toLocaleDateString()}</td>
-                    <td>${player.banned}</td>
-                `;
-
-                tableBody.appendChild(row); // Добавляем строку в таблицу
-            });
+            playersData = data; // Сохраняем все данные игроков
+            displayPage(currentPage); // Отображаем первую страницу
+            createPaginationButtons(); // Создаем кнопки пагинации
         })
             .catch(error => console.error('Response error:', error));
     }
-    fetchAndDisplayPlayers();
 
-    function paging(){
+    // Функция для отображения текущей страницы с игроками
+    function displayPage(page) {
+        const tableBody = document.getElementById("playersTable").getElementsByTagName("tbody")[0];
+        tableBody.innerHTML = ""; // Очищаем таблицу
 
+        const startIndex = (page - 1) * playersPerPage;
+        const endIndex = startIndex + playersPerPage;
+        const pageData = playersData.slice(startIndex, endIndex);
+
+        pageData.forEach(player => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${player.id}</td>
+                <td>${player.name}</td>
+                <td>${player.title}</td>
+                <td>${player.race}</td>
+                <td>${player.profession}</td>
+                <td>${player.level}</td>
+                <td>${new Date(player.birthday).toLocaleDateString()}</td>
+                <td>${player.banned}</td>
+            `;
+            tableBody.appendChild(row);
+        });
     }
 
+    // Функция для создания кнопок пагинации
+    function createPaginationButtons() {
+        const paginationDiv = document.getElementById("pagination");
+        paginationDiv.innerHTML = ""; // Очищаем секцию пагинации
+
+        const pageCount = Math.ceil(playersData.length / playersPerPage);
+
+        for (let i = 1; i <= pageCount; i++) {
+            const button = document.createElement("button");
+            button.innerText = i;
+            button.addEventListener("click", () => {
+                currentPage = i;
+                displayPage(currentPage);
+            });
+            paginationDiv.appendChild(button);
+        }
+    }
+
+    // Запускаем функцию для загрузки и отображения игроков
+    fetchAndDisplayPlayers();
 </script>
+
 
 </body>
 </html>
