@@ -48,11 +48,11 @@
 <div id="pagination" class="pagination"></div>
 
 <script>
-    let playersPerPage = 3; // Количество игроков на одной странице
-    let currentPage = 1;
-    let playersData = [];
+    let playersPerPage = 3; // стартовое количество игроков на одной странице
+    let currentPage = 1; // стартовая страница
+    let playersData = []; // игроки в будущем полученые с сервера
 
-    document.getElementById("playersCount").addEventListener("change", function() {
+    document.getElementById("playersCount").addEventListener("change", function() { // создание функции для редактирование человек на стр
         playersPerPage = parseInt(this.value); // Получаем выбранное значение
         currentPage = 1; // Сбрасываем на первую страницу
         displayPage(currentPage); // Обновляем отображение таблицы
@@ -63,9 +63,9 @@
     function fetchAndDisplayPlayers() {
         // Сначала делаем запрос, чтобы получить общее количество игроков
         fetch("http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players/count")
-            .then(res => res.ok ? res.json() : Promise.reject(`Error: ${res.status}`))
+            .then(res => res.ok ? res.json() : Promise.reject(`Error: ${res.status}`)) // Если все хорошо то получение json формата
             .then(totalPlayers => {
-            // Используем полученное количество игроков для второго запроса с правильным pageSize
+            // Получаю всех игроков которые есть
             return fetch(`http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players?pageSize=${totalPlayers}`);
         })
             .then(res => res.ok ? res.json() : Promise.reject(`Error: ${res.status}`))
@@ -79,13 +79,16 @@
 
     // Функция для отображения текущей страницы с игроками
     function displayPage(page) {
+        // Создаем константу для будущешго заполнения таблицы
         const tableBody = document.getElementById("playersTable").getElementsByTagName("tbody")[0];
         tableBody.innerHTML = ""; // Очищаем таблицу
-
+        // Начальный индекс начала игроков если 2 стр и 3 игрока то индекс начинается с 3 игрока (с 4 из за того что начинается с 0)
         const startIndex = (page - 1) * playersPerPage;
+        // До какого игрока заполнять данные если 3 то + 3, до 6 игрока
         const endIndex = startIndex + playersPerPage;
+        // Создание массива начающегося с логики выше
         const pageData = playersData.slice(startIndex, endIndex);
-
+        // Перечисление всех игроков и добавление каждого в строку
         pageData.forEach(player => {
             const row = document.createElement("tr");
             row.innerHTML = `
@@ -98,24 +101,28 @@
                 <td>${new Date(player.birthday).toLocaleDateString()}</td>
                 <td>${player.banned}</td>
             `;
+            // Добавление в таблицу 1 строчку с игроком
             tableBody.appendChild(row);
         });
     }
 
     // Функция для создания кнопок пагинации
     function createPaginationButtons() {
+        // Получение страниц
         const paginationDiv = document.getElementById("pagination");
         paginationDiv.innerHTML = ""; // Очищаем секцию пагинации
-
+        // Получение количества страниц всего
         const pageCount = Math.ceil(playersData.length / playersPerPage);
-
+        // Создание каждой каждой кнопки
         for (let i = 1; i <= pageCount; i++) {
             const button = document.createElement("button");
             button.innerText = i;
+            // Переход по странице и перенаправление на логику создания таблицы
             button.addEventListener("click", () => {
                 currentPage = i;
                 displayPage(currentPage);
             });
+            // Добавление всех кнопок
             paginationDiv.appendChild(button);
         }
     }
