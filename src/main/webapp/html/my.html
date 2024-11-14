@@ -1,8 +1,9 @@
+<!DOCTYPE html>
 <html>
 <head>
     <link href="/css/my.css" rel="stylesheet">
     <title>RPG</title>
-    <script src = "/js/javascript.js"></script>
+    <script src="/js/javascript.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <style>
@@ -14,6 +15,15 @@
         font-size: 1.5em;
         text-align: left;
         margin-bottom: 10px;
+    }
+    .active-page {
+        background-color: #ff0000;
+        color: white;
+    }
+
+    .edit-icon, .delete-icon {
+        width: 20px; /* Размер иконок */
+        cursor: pointer; /* Изменяет указатель на "руку" при наведении */
     }
 </style>
 <body>
@@ -39,6 +49,8 @@
         <th>Level</th>
         <th>Birthday</th>
         <th>Banned</th>
+        <th>Edit</th>
+        <th>Delete</th>
     </tr>
     </thead>
     <tbody>
@@ -48,48 +60,35 @@
 <div id="pagination" class="pagination"></div>
 
 <script>
-    let playersPerPage = 3; // стартовое количество игроков на одной странице
-    let currentPage = 1; // стартовая страница
-    let playersData = []; // игроки в будущем полученые с сервера
+    let playersPerPage = 3; // начальное количество игроков на странице
+    let currentPage = 1; // начальная страница
 
-    document.getElementById("playersCount").addEventListener("change", function() { // создание функции для редактирование человек на стр
-        playersPerPage = parseInt(this.value); // Получаем выбранное значение
-        currentPage = 1; // Сбрасываем на первую страницу
-        displayPage(currentPage); // Обновляем отображение таблицы
-        createPaginationButtons(); // Обновляем кнопки пагинации
+    document.getElementById("playersCount").addEventListener("change", function() {
+        playersPerPage = parseInt(this.value); // получаем выбранное значение
+         // сбрасываем на первую страницу
+        fetchAndDisplayPlayers(); // обновляем таблицу и пагинацию
     });
 
-    // Функция для получения количества игроков и данных, а затем для отображения страниц
+
+
+    // Функция для запроса данных и обновления таблицы
     function fetchAndDisplayPlayers() {
-        // Сначала делаем запрос, чтобы получить общее количество игроков
-        fetch("http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players/count")
-            .then(res => res.ok ? res.json() : Promise.reject(`Error: ${res.status}`)) // Если все хорошо то получение json формата
-            .then(totalPlayers => {
-            // Получаю всех игроков которые есть
-            return fetch(`http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players?pageSize=${totalPlayers}`);
-        })
-            .then(res => res.ok ? res.json() : Promise.reject(`Error: ${res.status}`))
+        // Запрос с параметрами pageNumber и pageSize
+        fetch(`http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players?pageNumber=${currentPage - 1}&pageSize=${playersPerPage}`)
+            .then(res => res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`))
             .then(data => {
-            playersData = data; // Сохраняем все данные игроков
-            displayPage(currentPage); // Отображаем первую страницу
-            createPaginationButtons(); // Создаем кнопки пагинации
+            displayPlayers(data); // отображаем игроков
+            createPaginationButtons(); // создаем кнопки пагинации
         })
-            .catch(error => console.error('Response error:', error));
+            .catch(error => console.error('Ошибка при загрузке данных:', error));
     }
 
-    // Функция для отображения текущей страницы с игроками
-    function displayPage(page) {
-        // Создаем константу для будущешго заполнения таблицы
+    // Функция для отображения игроков в таблице
+    function displayPlayers(data) {
         const tableBody = document.getElementById("playersTable").getElementsByTagName("tbody")[0];
-        tableBody.innerHTML = ""; // Очищаем таблицу
-        // Начальный индекс начала игроков если 2 стр и 3 игрока то индекс начинается с 3 игрока (с 4 из за того что начинается с 0)
-        const startIndex = (page - 1) * playersPerPage;
-        // До какого игрока заполнять данные если 3 то + 3, до 6 игрока
-        const endIndex = startIndex + playersPerPage;
-        // Создание массива начающегося с логики выше
-        const pageData = playersData.slice(startIndex, endIndex);
-        // Перечисление всех игроков и добавление каждого в строку
-        pageData.forEach(player => {
+        tableBody.innerHTML = ""; // очищаем таблицу
+
+        data.forEach(player => {
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>${player.id}</td>
@@ -100,37 +99,70 @@
                 <td>${player.level}</td>
                 <td>${new Date(player.birthday).toLocaleDateString()}</td>
                 <td>${player.banned}</td>
+                <td>
+                <button class = "edit">edit</button>
+
+                </td>
+                <td>
+                <button class="delete" data-id="${player.id}">delete</button>
+                </td>
             `;
-            // Добавление в таблицу 1 строчку с игроком
             tableBody.appendChild(row);
+        });
+
+        document.querySelectorAll('.delete').forEach(button => {
+            button.addEventListener('click', function() {
+                const playerId = this.getAttribute('data-id');
+                deletePlayers(playerId); // Передаем ID игрока для удаления
+            });
         });
     }
 
-    // Функция для создания кнопок пагинации
-    function createPaginationButtons() {
-        // Получение страниц
+    // Асинхронная функция для создания кнопок пагинации
+    async function createPaginationButtons() {
         const paginationDiv = document.getElementById("pagination");
-        paginationDiv.innerHTML = ""; // Очищаем секцию пагинации
-        // Получение количества страниц всего
-        const pageCount = Math.ceil(playersData.length / playersPerPage);
-        // Создание каждой каждой кнопки
-        for (let i = 1; i <= pageCount; i++) {
-            const button = document.createElement("button");
-            button.innerText = i;
-            // Переход по странице и перенаправление на логику создания таблицы
-            button.addEventListener("click", () => {
-                currentPage = i;
-                displayPage(currentPage);
-            });
-            // Добавление всех кнопок
-            paginationDiv.appendChild(button);
+        paginationDiv.innerHTML = ""; // очищаем секцию пагинации
+
+        try {
+            const totalPlayersCount = await fetch("http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players/count")
+                .then(res => res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`));
+
+            const pageCount = Math.ceil(totalPlayersCount / playersPerPage);
+
+            for (let i = 1; i <= pageCount; i++) {
+                const button = document.createElement("button");
+                button.innerText = i;
+                if (i === currentPage) {
+                    button.classList.add("active-page");
+                }
+                button.addEventListener("click", () => {
+                    currentPage = i;
+                    Array.from(paginationDiv.children).forEach(btn => btn.classList.remove("active-page"));
+                    button.classList.add("active-page");
+                    fetchAndDisplayPlayers();
+                });
+                paginationDiv.appendChild(button);
+            }
+        } catch (error) {
+            console.error('Ошибка запроса:', error);
         }
     }
 
-    // Запускаем функцию для загрузки и отображения игроков
+    function deletePlayers(playerId) {
+        fetch(`http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players/${playerId}`, { method: 'DELETE' })
+            .then(response => {
+            if (response.ok) {
+                fetchAndDisplayPlayers();
+            } else {
+                alert('Ошибка при удалении игрока');
+            }
+        })
+            .catch(error => console.error('Ошибка:', error));
+    }
+
+
     fetchAndDisplayPlayers();
+
 </script>
-
-
 </body>
 </html>
