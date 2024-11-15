@@ -100,8 +100,7 @@
                 <td>${new Date(player.birthday).toLocaleDateString()}</td>
                 <td>${player.banned}</td>
                 <td>
-                <button class = "edit">edit</button>
-
+                <button class = "edit" data-id="${player.id}">edit</button>
                 </td>
                 <td>
                 <button class="delete" data-id="${player.id}">delete</button>
@@ -110,12 +109,81 @@
             tableBody.appendChild(row);
         });
 
+        // Реализация кнопки delete
         document.querySelectorAll('.delete').forEach(button => {
             button.addEventListener('click', function() {
                 const playerId = this.getAttribute('data-id');
                 deletePlayers(playerId); // Передаем ID игрока для удаления
             });
         });
+
+        // Реализация кнопки edit
+        document.querySelectorAll('.edit').forEach(button => {
+            button.addEventListener('click', function () {
+                let player = {};
+                const playerForChangeId = this.getAttribute('data-id'); // id пользователя
+                const row = this.closest('tr'); // Получаем строку таблицы
+                const deleteButton = row.querySelector('.delete');
+                deleteButton.style.display = 'none';
+
+                if (this.textContent.trim() === 'edit') {
+                    this.textContent = 'save'; // Меняем текст на "save"
+                    makeFieldsEditable(row);
+                } else {
+                    this.textContent = 'edit';// Меняем текст обратно на "edit"
+                    player = saveChanges(row); // Измененный пользователь
+                    savePlayerChanges(player, playerForChangeId);
+//                    console.log(playerForChangeId);
+//                    console.log(player);
+                    if (deleteButton) {
+                        deleteButton.style.display = ''; // Показываем кнопку delete обратно
+                    }
+
+                    fetchAndDisplayPlayers();
+                }
+            });
+        });
+    }
+
+    // Функция для редактирования данных
+    function makeFieldsEditable(row) {
+        const nameCell = row.children[1];
+        const titleCell = row.children[2];
+        const raceCell = row.children[3];
+        const professionCell = row.children[4];
+        const bannedCell = row.children[7];
+
+        // Делаем поля редактируемыми
+        nameCell.innerHTML = `<input type="text" value="${nameCell.textContent.trim()}" />`;
+        titleCell.innerHTML = `<input type="text" value="${titleCell.textContent.trim()}" />`;
+
+        // Заменяем на select для Race
+        const raceOptions = ['HUMAN', 'DWARF', 'ELF', 'GIANT', 'ORC', 'TROLL', 'HOBBIT'];
+        raceCell.innerHTML = createSelect(raceOptions, raceCell.textContent.trim());
+
+        // Заменяем на select для Profession
+        const professionOptions = ['WARRIOR', 'ROGUE', 'SORCERER', 'CLERIC', 'PALADIN', 'NAZGUL', 'WARLOCK', 'DRUID'];
+        professionCell.innerHTML = createSelect(professionOptions, professionCell.textContent.trim());
+
+        // Заменяем на select для Banned
+        const bannedOptions = ['true', 'false'];
+        bannedCell.innerHTML = createSelect(bannedOptions, bannedCell.textContent.trim());
+    }
+    //Функция для сохранения изменений из makeFieldsEditable
+    function saveChanges(row) {
+        const nameCell = row.children[1];
+        const titleCell = row.children[2];
+        const raceCell = row.children[3];
+        const professionCell = row.children[4];
+        const bannedCell = row.children[7];
+
+        return {
+            name: nameCell.querySelector('input').value.trim(),
+            title: titleCell.querySelector('input').value.trim(),
+            race: raceCell.querySelector('select').value,
+            profession: professionCell.querySelector('select').value,
+            banned: bannedCell.querySelector('select').value === 'true',
+        };
     }
 
     // Асинхронная функция для создания кнопок пагинации
@@ -158,6 +226,26 @@
             }
         })
             .catch(error => console.error('Ошибка:', error));
+    }
+
+    function savePlayerChanges(player, id) {
+        fetch(`http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players/${id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(player)
+        })
+            .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка сохранения данных');
+            }
+            console.log('Данные сохранены:', player);
+        })
+            .catch(error => console.error('Ошибка:', error));
+    }
+
+    function createSelect(options, selectedValue) {
+        return `<select>${options.map(option =>
+        `<option value="${option}" ${option === selectedValue ? 'selected' : ''}>${option}</option>`).join('')}</select>`;
     }
 
 
