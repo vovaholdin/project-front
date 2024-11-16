@@ -120,7 +120,7 @@
 
     document.getElementById("playersCount").addEventListener("change", function() {
         playersPerPage = parseInt(this.value); // получаем выбранное значение
-         // сбрасываем на первую страницу
+        // сбрасываем на первую страницу
         fetchAndDisplayPlayers(); // обновляем таблицу и пагинацию
     });
 
@@ -130,12 +130,12 @@
     function fetchAndDisplayPlayers() {
         // Запрос с параметрами pageNumber и pageSize
         fetch(`http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players?pageNumber=${currentPage - 1}&pageSize=${playersPerPage}`)
-            .then(res => res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`))
+            .then(res => res.ok ? res.json() : Promise.reject(`Error: ${res.status}`))
             .then(data => {
             displayPlayers(data); // отображаем игроков
             createPaginationButtons(); // создаем кнопки пагинации
         })
-            .catch(error => console.error('Ошибка при загрузке данных:', error));
+            .catch(error => console.error('Error in loading data:', error));
     }
 
     // Функция для отображения игроков в таблице
@@ -188,8 +188,8 @@
                     this.textContent = 'edit';// Меняем текст обратно на "edit"
                     player = saveChanges(row); // Измененный пользователь
                     savePlayerChanges(player, playerForChangeId);
-//                    console.log(playerForChangeId);
-//                    console.log(player);
+                    //                    console.log(playerForChangeId);
+                    //                    console.log(player);
                     if (deleteButton) {
                         deleteButton.style.display = ''; // Показываем кнопку delete обратно
                     }
@@ -248,7 +248,7 @@
 
         try {
             const totalPlayersCount = await fetch("http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players/count")
-                .then(res => res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`));
+                .then(res => res.ok ? res.json() : Promise.reject(`Error: ${res.status}`));
 
             const pageCount = Math.ceil(totalPlayersCount / playersPerPage);
 
@@ -267,22 +267,22 @@
                 paginationDiv.appendChild(button);
             }
         } catch (error) {
-            console.error('Ошибка запроса:', error);
+            console.error('Request error:', error);
         }
     }
-
+    // удаление игрока
     function deletePlayers(playerId) {
         fetch(`http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players/${playerId}`, { method: 'DELETE' })
             .then(response => {
             if (response.ok) {
                 fetchAndDisplayPlayers();
             } else {
-                alert('Ошибка при удалении игрока');
+                alert('Delete player error');
             }
         })
-            .catch(error => console.error('Ошибка:', error));
+            .catch(error => console.error('Error:', error));
     }
-
+    // сохранение игрока
     function savePlayerChanges(player, id) {
         fetch(`http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players/${id}`, {
             method: 'POST',
@@ -291,11 +291,11 @@
         })
             .then(response => {
             if (!response.ok) {
-                throw new Error('Ошибка сохранения данных');
+                throw new Error('Error save');
             }
-            console.log('Данные сохранены:', player);
+            console.log('Data save:', player);
         })
-            .catch(error => console.error('Ошибка:', error));
+            .catch(error => console.error('Error:', error));
     }
 
     function createSelect(options, selectedValue) {
@@ -303,7 +303,7 @@
         `<option value="${option}" ${option === selectedValue ? 'selected' : ''}>${option}</option>`).join('')}</select>`;
     }
 
-
+    // создание нового аккаунта
     async function collectFormData() {
         try {
             // Сначала получаем количество пользователей с сервера
