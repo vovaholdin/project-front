@@ -129,7 +129,7 @@
     // Функция для запроса данных и обновления таблицы
     function fetchAndDisplayPlayers() {
         // Запрос с параметрами pageNumber и pageSize
-        fetch(`http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players?pageNumber=${currentPage - 1}&pageSize=${playersPerPage}`)
+        fetch(`/rest/players?pageNumber=${currentPage - 1}&pageSize=${playersPerPage}`)
             .then(res => res.ok ? res.json() : Promise.reject(`Error: ${res.status}`))
             .then(data => {
             displayPlayers(data); // отображаем игроков
@@ -247,7 +247,7 @@
         paginationDiv.innerHTML = ""; // очищаем секцию пагинации
 
         try {
-            const totalPlayersCount = await fetch("http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players/count")
+            const totalPlayersCount = await fetch("/rest/players/count")
                 .then(res => res.ok ? res.json() : Promise.reject(`Error: ${res.status}`));
 
             const pageCount = Math.ceil(totalPlayersCount / playersPerPage);
@@ -272,7 +272,7 @@
     }
     // удаление игрока
     function deletePlayers(playerId) {
-        fetch(`http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players/${playerId}`, { method: 'DELETE' })
+        fetch(`/rest/players/${playerId}`, { method: 'DELETE' })
             .then(response => {
             if (response.ok) {
                 fetchAndDisplayPlayers();
@@ -284,7 +284,7 @@
     }
     // сохранение игрока
     function savePlayerChanges(player, id) {
-        fetch(`http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players/${id}`, {
+        fetch(`/rest/players/${id}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(player)
@@ -307,7 +307,7 @@
     async function collectFormData() {
         try {
             // Сначала получаем количество пользователей с сервера
-            const countResponse = await fetch('http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players/count');
+            const countResponse = await fetch('/rest/players/count');
             if (!countResponse.ok) {
                 throw new Error('Failed to fetch player count');
             }
@@ -329,7 +329,7 @@
             console.log("Collected Data:", JSON.stringify(formData, null, 2));
 
             // Отправка POST-запроса
-            const response = await fetch('http://localhost:8080/rpg-1.0-SNAPSHOT/rest/players', {
+            const response = await fetch('/rest/players', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
